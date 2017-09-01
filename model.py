@@ -10,39 +10,6 @@ from sklearn.model_selection import train_test_split
 import sklearn
 from random import shuffle
 
-# load training data from disk
-images = []
-measurements = []
-datadir = "data"
-correction = 0.2
-
-def load_image(source, datadir, dir):
-    filename = source.split('/')[-1]
-    current_path = os.path.join(datadir, dir, 'IMG', filename)
-    # image = cv2.imread(current_path)
-    return current_path
-
-def add_image(image, measurement):
-    images.append(image)
-    measurements.append(measurement)
-
-
-for dir in os.listdir(datadir):
-    csvpath = os.path.join(datadir, dir, "driving_log.csv")
-    print(csvpath)
-    if os.path.exists(csvpath):
-        print("Load image in: " + csvpath)
-        with open(csvpath) as csvfile:
-            dictreader = csv.DictReader(csvfile)
-            for row in dictreader:
-                image = load_image(row['center'], datadir, dir)
-                measurement = float(row['steering'])
-                add_image(image, measurement)
-
-                image = load_image(row['left'], datadir, dir)
-                add_image(image, measurement+correction)
-                image = load_image(row['right'], datadir, dir)
-                add_image(image, measurement - correction)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Remote Driving')
@@ -54,6 +21,40 @@ if __name__ == '__main__':
         help='Path to model h5 file. Model should be on the same path.'
     )
     args = parser.parse_args()
+    # load training data from disk
+    images = []
+    measurements = []
+    datadir = "data"
+    correction = 0.2
+
+    def load_image(source, datadir, dir):
+        filename = source.split('/')[-1]
+        current_path = os.path.join(datadir, dir, 'IMG', filename)
+        # image = cv2.imread(current_path)
+        return current_path
+
+    def add_image(image, measurement):
+        images.append(image)
+        measurements.append(measurement)
+
+
+    for dir in os.listdir(datadir):
+        csvpath = os.path.join(datadir, dir, "driving_log.csv")
+        print(csvpath)
+        if os.path.exists(csvpath):
+            print("Load image in: " + csvpath)
+            with open(csvpath) as csvfile:
+                dictreader = csv.DictReader(csvfile)
+                for row in dictreader:
+                    image = load_image(row['center'], datadir, dir)
+                    measurement = float(row['steering'])
+                    add_image(image, measurement)
+
+                    image = load_image(row['left'], datadir, dir)
+                    add_image(image, measurement+correction)
+                    image = load_image(row['right'], datadir, dir)
+                    add_image(image, measurement - correction)
+
 
     data = list(zip(images, measurements))
 
@@ -94,17 +95,6 @@ if __name__ == '__main__':
 
 
     # define neural network structure
-    # model = Sequential()
-    # model.add(Cropping2D(cropping=((50, 20), (0, 0)), input_shape=(160, 320, 3)))
-    # model.add(Lambda(lambda x: x / 255.0 - 0.5))
-    # model.add(Conv2D(6, (5, 5), activation="relu"))
-    # model.add(MaxPooling2D())
-    # model.add(Conv2D(6, (5, 5), activation="relu"))
-    # model.add(MaxPooling2D())
-    # model.add(Flatten())
-    # model.add(Dense(120))
-    # model.add(Dense(84))
-    # model.add(Dense(1))
 
     model = None
     if args.model != "":
@@ -122,9 +112,9 @@ if __name__ == '__main__':
         model.add(Conv2D(64, (3, 3), activation="relu"))
         model.add(Conv2D(64, (3, 3), activation="relu"))
         model.add(Flatten())
-        model.add(Dense(100))
-        model.add(Dense(50))
-        model.add(Dense(10))
+        model.add(Dense(100, activation="relu"))
+        model.add(Dense(50, activation="relu"))
+        model.add(Dense(10, activation="relu"))
         model.add(Dense(1))
 
     # train neural network
